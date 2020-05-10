@@ -5,7 +5,34 @@
 $(function () {
     'use strict';
 
-    // Fonction qui initialise le localeStorage
+    const result = $('#results');
+    const goSearch = $('[name="rechercher"]');
+    const searchedTitre = $('.titre');
+    const sortBy = $('.trier');
+    const fav = $('#fav');
+    let tracksSearchArray = [];
+    
+
+    // Constructor qui va être utiliser pour chaque track
+    class Track {
+        constructor(id, name, title, album, cover, preview) {
+            this.id = id,
+                this.name = name,
+                this.title = title,
+                this.album = album,
+                this.cover = cover,
+                this.preview = preview
+        }
+    };
+
+
+
+
+
+    // Trois fonctions qui initialisent le localeStorage
+
+
+    // Pour les favoris
 
     function storageInit() {
 
@@ -15,21 +42,49 @@ $(function () {
             localStorage.setItem("deez-web", JSON.stringify(songs));
         };
     }
-    storageInit()
+    storageInit();
+
+    // Pour la requête
+
+    function storageUrlInit() {
+
+        let req = [];
+        let storedUrl = JSON.parse(localStorage.getItem("request", req));
+        if (storedUrl == null || storedUrl == undefined) {
+            localStorage.setItem("request", JSON.stringify(req));
+        };
+    }
+    storageUrlInit();
+
+    // Pour le resultat de recherche
+
+    function storageSearchedInit() {
+
+        let searched = [];
+        let storesearched = JSON.parse(localStorage.getItem("searched", searched));
+        if (storesearched == null || storesearched == undefined) {
+            localStorage.setItem("searched", JSON.stringify(searched));
+        };
+    }
+    storageSearchedInit();
 
 
 
 
-    const result = $('#results');
-    const goSearch = $('[name="rechercher"]');
-    const searchedTitre = $('.titre');
-    const sortBy = $('.trier');
-    let favorits = [];
-    const fav = $('#fav');
+    // Save last search results
 
-    //  Search on click   
+    let location = new URL(window.location);
+    let lastSearchPage = (location.pathname);
 
-    goSearch.on('click', onSearch);
+    if (lastSearchPage == "/deez-web/recherche.html") {
+        let storedUrl = localStorage.getItem("request");
+        let newrequestparsed = JSON.parse(storedUrl);
+
+        sendRequest(newrequestparsed);
+
+    };
+
+    // Send the request on search
 
     function onSearch(event) {
         event.preventDefault()
@@ -40,175 +95,202 @@ $(function () {
         let sortByValue = sortBy.val();
         sortByValue = encodeURIComponent(sortByValue);
 
-        console.log(searchedTitreValue);
+        let _url = `https://api.deezer.com/search?q=${searchedTitreValue}&order=${sortByValue}&output=jsonp`;
 
 
+        let request = localStorage.getItem("request");
+        let newrequest = JSON.parse(request);
+        newrequest = _url;
+
+        localStorage.setItem("request", JSON.stringify(newrequest));
+
+        sendRequest(_url);
+
+    }
 
 
+    goSearch.on('click', onSearch);
+
+
+    // Fonction qui encoie une requête avec une url donnée en paramètre
+
+    function sendRequest(url) {
         const request = ($.ajax({
-            url: `https://api.deezer.com/search?q=${searchedTitreValue}&order=${sortByValue}&output=jsonp`,
+            url: url,
             dataType: "jsonp",
         }));
 
         request.done(onSuccess);
         request.fail(onFail);
         console.log(request);
+
+
     }
 
 
 
 
-
+    // En cas de la reussite de la requête on affiche le resulta dans la page
 
 
     function onSuccess(results) {
 
-        result.empty();
-
-
         console.log("Résultat :", results.data);
 
-        let tracksSearchArray = results.data;
+        tracksSearchArray = results.data;
+        // let next = results.next;
+        // verifyBtnFav(tracksSearchArray);
+
+        let searched = localStorage.getItem("searched");
+        let newsearched = JSON.parse(searched);
 
 
-        $.each(tracksSearchArray, function (i, track) {
+        $.each(tracksSearchArray, function (i, item) {
 
-            let ident = track.id;
-            let art = track.artist.name;
-            let tit = track.title;
-            let alb = track.album.title;
-            let cov = track.album.cover_small;
-            let prev = track.preview;
+            const track = new Track(item.id, item.artist.name, item.title, item.album.title, item.album.cover_small, item.preview);
 
-            // const trackObj = {ident, art, tit, alb, cov, prev};
+            newsearched.push(track);
+
+        });
+
+        localStorage.setItem("searched", JSON.stringify(tracksSearchArray));
+
+        result.empty();
+
+        showTheResultStocked();
+    }
+
+
+
+
+
+
+    function showTheResultStocked() {
+
+        let searched = localStorage.getItem("searched");
+        let newsearched = JSON.parse(searched);
+
+        $.each(newsearched, function (i, item) {
+
+            const track = new Track(item.id, item.artist.name, item.title, item.album.title, item.album.cover_small, item.preview);
+
 
             result.append(
 
-                `<div class="track">
-                            <div class="media-ctn">
-                            <div class="media"> 
-                                <div>
-                                    <img src="${cov}" alt="">
-                                </div>
-                                <div>
-                                    <h5>${art}</h5>
-                                    <p>${tit}</p>
-                                    <p>${alb}</p>
-                                </div>
+                `<div class="track track-${track.id}">
+                        <div class="media-ctn">
+                        <div class="media"> 
+                            <div>
+                                <img src="${track.cover}" alt="">
                             </div>
-                           
-
-                            <div class="player">
-                                <audio controls src=${prev}></audio>
+                            <div>
+                                <h5>${track.name}</h5>
+                                <p>${track.title}</p>
+                                <p>${track.album}</p>
                             </div>
-                            </div>
+                        </div>
+                       
 
-                            <div class='btn-fav-ctn-${ident} fav-cnt'>
-                            <input type="image" src="img/favoris-to-add.svg" id="${ident}" class="btn-add-fav">
-                            <input type="image" src="img/favoris-to-remove.svg" id="${ident}" class="btn-remove-fav">
-                         
-                            </div>
-                        </div>`
+                        <div class="player">
+                            <audio controls src=${track.preview}></audio>
+                        </div>
+                        </div>
 
-
+                        <div class='btn-fav-ctn fav-cnt'>
+                        <input type="image" src="img/favoris-to-add.svg" id="${track.id}" class="btn-add-fav">
+                        </div>
+                    </div>`
             );
 
 
-        });
-
-
-  // Fonction qui rajoute un titre aux favoris en cliquant sur le bouton favoris
-
-
-
-
-        $('.btn-add-fav').on('click', function addTofavorite(e) {
-            e.preventDefault();
-
-            console.log(this);
-            let identity = this.id;
-
-
-
-            for (let i = 0; i < tracksSearchArray.length; i++) {
-                if (tracksSearchArray[i].id == identity) {
-                    let ident = tracksSearchArray[i].id;
-                    let art = tracksSearchArray[i].artist.name;
-                    let tit = tracksSearchArray[i].title;
-                    let alb = tracksSearchArray[i].album.title;
-                    let cov = tracksSearchArray[i].album.cover_small;
-                    let prev = tracksSearchArray[i].preview;
-
-                    const trackfavobj = { ident, art, tit, alb, cov, prev };
-                    // favoris.push(trackFavObj);
-
-                    let stored = localStorage.getItem("deez-web");
-                    let favoritstostore = JSON.parse(stored);
-                    favoritstostore.unshift(trackfavobj);
-
-                    localStorage.setItem("deez-web", JSON.stringify(favoritstostore));
-
-
-   
-
-
-                }
-            }
-            // $( '.btn-add-fav' ).off( "click", `#${identity}`, addTofavorite());
-            // $( '.btn-add-fav' ).on( "click", `#${identity}`, removeFromfavorite());
-            $(this).css("z-index", "9");
-            $(`.btn-remove-fav #${identity}`).css("z-index", "10");
 
 
         });
 
 
 
-
-   // Fonction qui supprime un titre aux favoris en cliquant sur le bouton favoris
-
-
-        $('.btn-remove-fav').on('click', function removeFromfavorite(event) {
-            event.preventDefault();
-
-            let identity2 = this.id;
-            console.log(this);
+        startBtnFav();
 
 
-
-
-            let favorits = localStorage.getItem("deez-web");
-            let favorisarray = JSON.parse(favorits);
-
-
-
-
-            for (let i = 0; i < favorisarray.length; i++) {
-                if (favorisarray[i].ident == `${identity2}`) {
-
-                    favorisarray.splice([i], 1);
-
-                    localStorage.setItem("deez-web", JSON.stringify(favorisarray));
-
-                }
-            }
-
-            // $( '.btn-remove-fav' ).off( "click", `#${identity2}`, removeFromfavorite(e));
-            // $( '.btn-remove-fav' ).on( "click", `#${identity2}`, addTofavorite(e));
-            $(this).css("z-index", "10");
-            $(`.btn-add-fav #${identity2}`).css("z-index", "9");
-
-
-
-
-
-
-
-
-        });
 
 
     }
+
+
+
+
+
+
+// Fonction qui active le click sur le bouton favoris
+
+
+    function startBtnFav() {
+
+        let searched = localStorage.getItem("searched");
+        let newsearched = JSON.parse(searched);
+
+        $.each(newsearched, function (index, item) {
+
+
+            $(`#${item.id}`).on('click', function addOrRemove(e) {
+                e.preventDefault();
+                console.log('cliqué');
+
+                let identity = this.id;
+                console.log(identity);
+
+                if (item.id == identity && $(`#${item.id}`).attr("src") == "img/favoris-to-add.svg") {
+
+
+                    let track = new Track(item.id, item.artist.name, item.title, item.album.title, item.album.cover_small, item.preview);
+
+                    let stored = localStorage.getItem("deez-web");
+                    let favoritstostore = JSON.parse(stored);
+                    favoritstostore.unshift(track);
+
+                    localStorage.setItem("deez-web", JSON.stringify(favoritstostore));
+
+                    $(`#${item.id}`).removeAttr("src");
+                    $(`#${item.id}`).attr("src", "img/favoris-to-remove.svg");
+
+                    console.log('the favoris :' + track);
+
+
+                    displayFavorit();
+                }
+
+                else if ($(`#${item.id}`).attr("src") == "img/favoris-to-remove.svg") {
+
+
+                    let favorits = localStorage.getItem("deez-web");
+                    let favorisarray = JSON.parse(favorits);
+
+                    for (let i = 0; i < favorisarray.length; i++) {
+                        if (favorisarray[i].id == identity) {
+
+                            favorisarray.splice([i], 1);
+
+                            localStorage.setItem("deez-web", JSON.stringify(favorisarray));
+
+                        }
+                    }
+
+                    $(`#${item.id}`).removeAttr("src");
+                    $(`#${item.id}`).attr("src", "img/favoris-to-add.svg");
+
+                    displayFavorit();
+
+                }
+            });
+
+
+        })
+    }
+
+
+
+
+
 
 
     // Fonction qui affiche les favoris stockés dans le localesorage
@@ -217,46 +299,36 @@ $(function () {
 
         let stored = localStorage.getItem("deez-web");
 
-        let storagear = JSON.parse(stored);
-        console.log(storagear);
-        console.log(typeof (stored));
+        let favorits = JSON.parse(stored);
 
-        $.each(storagear, function (j, track) {
+        $.each(favorits, function (j, track) {
+            // const track = new Track(item.id, item.name, item.title, item.album, item.cover, item.preview);
 
-            let ident = track.ident;
-            let art = track.art;
-            let tit = track.tit;
-            let alb = track.alb;
-            let cov = track.cov;
-            let prev = track.prev;
-
-            // const trackOb = { ident, art, tit, alb, cov, prev };
 
             fav.append(
 
-                `<div class="track">
+
+                `<div class="track track-${track.id}">
                              <div class="media-ctn">
                                     <div class="media">
                                         <div>
-                                            <img src="${cov}" alt="">
+                                            <img src="${track.cover}" alt="">
                                         </div>
                                         <div>
-                                            <h5>${art}</h5>
-                                            <p>${tit}</p>
-                                            <p>${alb}</p>
+                                            <h5>${track.name}</h5>
+                                            <p>${track.title}</p>
+                                            <p>${track.album}</p>
                                         </div>
                                     </div>
     
                                     <div class="player">
-                                        <audio controls src=${prev}></audio>
+                                        <audio controls src=${track.preview}></audio>
                                     </div>
 
                             </div>
-                                    <div class='btn-fav-ctn-${ident} fav-cnt'>
-                                    <input type="image" src="img/favoris-to-remove.svg" id="${ident}" class="btn-remove-fav">
-                                    
-            
-                                    </div>
+                            <div class='btn-fav-ctn fav-cnt'>
+                            <input type="image" src="img/favoris-to-add.svg" id="${track.id}" class="btn-add-fav">
+                            </div>
                                 </div>`
 
             );
@@ -272,7 +344,7 @@ $(function () {
 
 
 
-// Fonction qui affiche un titre aléatoirement un titre sur la page d'accueil
+    // Fonction qui affiche un titre aléatoirement un titre sur la page d'accueil
 
 
 
@@ -285,50 +357,48 @@ $(function () {
 
 
     function randomTrack() {
+
         let tracks = localStorage.getItem("deez-web");
-        let tracksob = JSON.parse(tracks);
-        const randomIndex = window.Math.floor(Math.random() * tracksob.length);
-        // console.log('random' + randomIndex );
-        let ident = tracksob[randomIndex].ident;
-        let art = tracksob[randomIndex].art;
-        let tit = tracksob[randomIndex].tit;
-        let alb = tracksob[randomIndex].alb;
-        let cov = tracksob[randomIndex].cov;
-        let prev = tracksob[randomIndex].prev;
-
-        rand.empty();
+        if (tracks) {
+            let tracksob = JSON.parse(tracks);
+            const randomIndex = window.Math.floor(Math.random() * tracksob.length);
 
 
-        rand.append(
+            const track = new Track(tracksob[randomIndex].id, tracksob[randomIndex].name, tracksob[randomIndex].title, tracksob[randomIndex].album, tracksob[randomIndex].cover, tracksob[randomIndex].preview);
 
-            `<div class="track">
+
+            rand.empty();
+
+
+            rand.append(
+
+                `<div class="track track-${track.id}">
             <div class="media-ctn">
         <div class="media">
             <div>
-                <img src="${cov}" alt="">
+                <img src="${track.cover}" alt="">
             </div>
             <div>
-                <h5>${art}</h5>
-                <p>${tit}</p>
-                <p>${alb}</p>
+                <h5>${track.name}</h5>
+                <p>${track.title}</p>
+                <p>${track.album}</p>
             </div>
         </div>
 
         <div class="player">
-            <audio controls src=${prev}></audio>
+            <audio controls src=${track.preview}></audio>
         </div>
 
 
         </div>
-        <div class='btn-fav-ctn-${ident} fav-cnt'>
-        <input type="image" src="img/favoris-to-remove.svg" id="${ident}" class="btn-remove-fav">
-        
-
+        <div class='btn-fav-ctn fav-cnt'>
+        <input type="image" src="img/favoris-to-add.svg" id="${track.id}" class="btn-add-fav">
         </div>
     </div>`
 
-        );
+            );
 
+        }
     };
 
 
@@ -337,7 +407,7 @@ $(function () {
 
 
 
-    
+
     function onFail(jqXHR) {
         result.html(`<div class="alert alert-danger">
                                     Une erreur s'est produite : ${jqXHR.statusText}
@@ -348,281 +418,6 @@ $(function () {
 
 
 
-
-
-
-
-// $(function() {
-//     'use strict';
-
-//             const storageService = new StorageService(LS_ID_DEEZ);
-
-//             let tracksFavorits =[];
-//             let trackObj = {};
-
-
-//         function createTrackInfo(artist, title, album, cover){
-
-//             const coverCtnr = document.createElement('div');
-//             const coverImg = document.createElement('img');
-//             coverImg.setAttribute('src', cover);
-//             coverCtnr.appendChild(coverImg);
-
-//             const infoCtnr = document.createElement('div');
-//             const artisteName = document.createElement('h5');
-//             artisteName.innerText = artist;
-//             const trackTitle = document.createElement('p');
-//             trackTitle.innerText = title;
-//             const albumTitle = document.createElement('p');
-//             albumTitle.innerText = album;
-//             infoCtnr.appendChild(artisteName);
-//             infoCtnr.appendChild(trackTitle);
-//             infoCtnr.appendChild(albumTitle);
-
-
-//             const mediaCtnr = document.createElement('div');
-//             mediaCtnr.className='media';
-
-//             mediaCtnr.appendChild(coverCtnr);
-//             mediaCtnr.appendChild(infoCtnr);
-
-//             return mediaCtnr;
-
-//         }
-
-
-//         function creatPlayer(preview){
-//             const trackPlayer = document.createElement('audio');
-//             trackPlayer.setAttribute('controls', "");
-//             trackPlayer.setAttribute('src', preview);
-
-//             const playerCtnr = document.createElement('div');
-//             playerCtnr.className='player';
-
-//             playerCtnr.appendChild(trackPlayer);
-
-//             return playerCtnr;
-//         }
-
-
-//         function createBtnFavorits(art, tit, alb, cov, prev){
-//             let favoris = {art, tit, alb, cov, prev}
-//             const btnFavCtnr = document.createElement('div');
-//             btnFavCtnr.className='add-favorite';
-
-//             const aLink = document.createElement('a');
-//             aLink.setAttribute('href', 'javascript:void(0)');
-//             aLink.className = 'btn-fav'
-//             const pictoCtnr = document.createElement('div');
-//             const favPicto = document.createElement('img');
-//             favPicto.setAttribute('src', 'img/favoris-vide.svg');
-//             pictoCtnr.appendChild(favPicto);
-//             const btnFavText = document.createElement('p');
-//             btnFavText.innerText = "Ajouter aux favoris"
-//             pictoCtnr.appendChild(btnFavText);
-//             aLink.appendChild(pictoCtnr);
-
-
-//              aLink.addEventListener('click', function addToFavorit(e) {
-
-//                 e.preventDefault();
-//                 // $(e.target).removeClass('removed');
-
-
-//                 this.className = 'added';
-
-//               tracksFavorits.push(favoris);
-
-//               storageService.setData('tracks', tracksFavorits);
-//               let btnFavArray = [];
-//                 for(let i = 0; i < tracksFavorits.length; i++){
-
-//                     this.id = `btn-fav-${[i]}`;
-
-//                     btnFavArray.push(this.id);
-
-//                     console.log(this.id);
-//                     console.log('le btnFavArray' + btnFavArray )
-//                 }
-
-
-//                 console.log(tracksFavorits);
-
-
-//             });
-
-
-//             btnFavCtnr.appendChild(aLink);
-//             return btnFavCtnr;
-
-//         }
-
-
-
-
-//          function createTrack({art, tit, alb, cov, prev}){
-
-//             const trackCtnr = document.createElement('div');
-//             trackCtnr.className = 'track';
-
-//             trackCtnr.appendChild(createTrackInfo(art, tit, alb, cov));
-//             trackCtnr.appendChild(creatPlayer(prev));
-//             trackCtnr.appendChild(createBtnFavorits(art, tit, alb, cov, prev));
-
-//             return trackCtnr;
-//         };
-
-
-
-//     const result = $('#results');
-//     const goSearch = $('[name="rechercher"]');
-//     const searchedTitre = $('#titre');
-//     const sortBy = $('#trier');
-
-
-
-//     goSearch.on('click', onSearch);
-
-//     function onSearch(event) {
-//         event.preventDefault()
-
-//         let searchedTitreValue = searchedTitre.val();
-//         searchedTitreValue = encodeURIComponent(searchedTitreValue);
-
-//         let sortByValue = sortBy.val();
-//         sortByValue = encodeURIComponent(sortByValue);
-
-//         console.log(searchedTitreValue);
-
-
-//         const request = ($.ajax({
-//             url: `https://api.deezer.com/search?q=${searchedTitreValue}&order=${sortByValue}&output=jsonp`,
-//             dataType: "jsonp",
-//         }));
-
-//         request.done(onSuccess);
-//         request.fail(onFail);
-//     }
-
-//     function onSuccess(results) {
-//         result.empty();
-
-//         console.log("Résultat :", results.data);
-//         let listItem = [];
-//         var tracksArray = results.data;
-
-//         $.each(tracksArray, function (i, item) {
-
-//             let art = item.artist.name;
-//             let tit = item.title;
-//             let alb = item.album.title;
-//             let cov = item.album.cover_small;
-//             let prev = item.preview;
-
-//             trackObj = {art, tit, alb, cov, prev};
-//             result.append(createTrack(trackObj));
-
-//             });
-
-//     };
-
-
-
-// //    ` <div class="track">
-
-// //         <div class="media">
-// //             <div>
-// //                 <img src=${item.album.cover_small} alt="">
-// //             </div>
-// //             <div>
-// //                 <h5>${item.artist.name}</h5>
-// //                 <p>${item.title}</p>
-// //                 <p>${item.album.title}</p>
-// //             </div>
-// //         </div>
-
-// //         <div class="player">
-// //             <audio controls src=${item.preview}></audio>
-// //         </div>
-
-// //         <div class="add-favorite">
-// //             <a href="#">
-// //                 <div><img src="img/favoris-vide.svg" alt="">
-// //                     <p>Ajouter aux favoris</p>
-// //                 </div>
-// //             </a>
-// //         </div>
-
-// //     </div>`
-
-
-
-
-//     function onFail(jqXHR) {
-//         result.html(`<div class="page-title">
-//                         Une erreur s'est produite : ${jqXHR.statusText}
-//                     </div>`);
-//     };
-
-//     let fav = $('#fav');
-//     let rand = $('#random-track');
-//     let tracksStorage = localStorage.getItem("deez-web");
-//     let tracksStorageJson = JSON.parse(tracksStorage);
-//     // Affichage dans la console
-//     console.log(tracksStorageJson);
-//     let tracksStorageTable = tracksStorageJson.tracks;
-
-//     function randomTrack(){
-//         const randomIndex  = window.Math.floor(Math.random() * tracksStorageTable.length);
-//         console.log('random' + randomIndex );
-//         let art = tracksStorageTable[randomIndex].art; 
-//         let tit = tracksStorageTable[randomIndex].tit;  
-//         let alb = tracksStorageTable[randomIndex].alb;  
-//         let cov = tracksStorageTable[randomIndex].cov;  
-//         let prev= tracksStorageTable[randomIndex].prev; 
-//         let randomTrackObj = {art, tit, alb, cov, prev};
-
-//         rand.append(createTrack(randomTrackObj));
-//     };
-
-
-
-
-
-
-
-//     function toFavorits(){
-
-//       for(let i = 0; i < tracksStorageTable.length; i++){
-//         console.log('hey' + tracksStorageTable[i].art);
-//         console.log('hey' + tracksStorageTable[i].alb);
-
-//               let  art = tracksStorageTable[i].art; 
-//               let tit = tracksStorageTable[i].tit;  
-//               let alb = tracksStorageTable[i].alb;  
-//               let cov = tracksStorageTable[i].cov;  
-//               let prev= tracksStorageTable[i].prev; 
-//               let trackStoredObj = {art, tit, alb, cov, prev};
-
-//         fav.append(createTrack(trackStoredObj));
-
-//             };
-
-//     };
-
-//     toFavorits();
-
-
-//     randomTrack();
-
-
-
-
-
-
-
-
-// });
 
 
 
