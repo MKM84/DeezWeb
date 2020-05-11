@@ -13,7 +13,7 @@ $(function () {
     let tracksSearchArray = [];
     
 
-    // Constructor qui va être utiliser pour chaque track
+    // Constructor qui va être utilisé pour chaque track
     class Track {
         constructor(id, name, title, album, cover, preview) {
             this.id = id,
@@ -69,20 +69,27 @@ $(function () {
     storageSearchedInit();
 
 
+    // let storedUrl = localStorage.getItem("request");
+    // let newrequestparsed = JSON.parse(storedUrl);
 
+    // sendRequest(newrequestparsed);
 
-    // Save last search results
+    // Save the last search results
 
-    let location = new URL(window.location);
-    let lastSearchPage = (location.pathname);
+//     function locationSave(){
 
-    if (lastSearchPage == "/deez-web/recherche.html") {
-        let storedUrl = localStorage.getItem("request");
-        let newrequestparsed = JSON.parse(storedUrl);
+//     let location = new URL(window.location);
+//     let lastSearchPage = (location.pathname);
 
-        sendRequest(newrequestparsed);
+//     if (lastSearchPage == "recherche.html") {
+//         let storedUrl = localStorage.getItem("request");
+//         let newrequestparsed = JSON.parse(storedUrl);
 
-    };
+//         sendRequest(newrequestparsed);
+
+//     };
+
+// }
 
     // Send the request on search
 
@@ -91,9 +98,11 @@ $(function () {
 
         let searchedTitreValue = searchedTitre.val();
         searchedTitreValue = encodeURIComponent(searchedTitreValue);
+        
 
         let sortByValue = sortBy.val();
         sortByValue = encodeURIComponent(sortByValue);
+       
 
         let _url = `https://api.deezer.com/search?q=${searchedTitreValue}&order=${sortByValue}&output=jsonp`;
 
@@ -106,13 +115,14 @@ $(function () {
 
         sendRequest(_url);
 
+        
     }
 
 
     goSearch.on('click', onSearch);
 
 
-    // Fonction qui encoie une requête avec une url donnée en paramètre
+    // Fonction qui envoie une requête avec  l'url donnée en paramètre
 
     function sendRequest(url) {
         const request = ($.ajax({
@@ -130,7 +140,7 @@ $(function () {
 
 
 
-    // En cas de la reussite de la requête on affiche le resulta dans la page
+    // En cas de réussite de la requête on affiche le resultas dans la page
 
 
     function onSuccess(results) {
@@ -293,7 +303,7 @@ $(function () {
 
 
 
-    // Fonction qui affiche les favoris stockés dans le localesorage
+    // Fonction qui affiche les favoris stockés dans le localestorage
 
     function displayFavorit() {
 
@@ -344,7 +354,7 @@ $(function () {
 
 
 
-    // Fonction qui affiche un titre aléatoirement un titre sur la page d'accueil
+    // Fonction qui affiche aléatoirement un titre sur la page d'accueil
 
 
 
@@ -359,7 +369,7 @@ $(function () {
     function randomTrack() {
 
         let tracks = localStorage.getItem("deez-web");
-        if (tracks) {
+        if (tracks.length > 0) {
             let tracksob = JSON.parse(tracks);
             const randomIndex = window.Math.floor(Math.random() * tracksob.length);
 
