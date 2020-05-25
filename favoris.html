@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Favoris</title>
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@100;400;500;700;800;900&display=swap"
-    rel="stylesheet">
-<link rel="stylesheet" href="style/style.css">
-<script src="//unpkg.com/jquery"></script>
-<!-- <script src="storage.js"></script> -->
-<script src="index.js"></script>
+        rel="stylesheet">
+    <link rel="stylesheet" href="style/style.css">
+    <script src="//unpkg.com/jquery"></script>
+    
+    <script src="index.js"></script>
+    <script src="removeFromFavorits.js"></script>
 
 </head>
+
 <body>
     <header>
 
@@ -52,7 +55,7 @@
             <a href="favoris.html">
                 <div class="item-navigation">
                     <div>
-                        <img class="picto-fav"  src="img/favoris.svg" alt="">
+                        <img class="picto-fav" src="img/favoris.svg" alt="">
                     </div>
                     <div>
                         <p>
@@ -76,10 +79,14 @@
                 Liste de mes titres favoris
             </p>
         </div>
-        <div id="fav" >
 
+        <!-- div qui va contenir les titres rajoutés aux favoris -->
+        
+        <div id="fav">
+            
         </div>
-        </main>
+    </main>
 
 </body>
+
 </html>

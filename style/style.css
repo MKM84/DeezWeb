@@ -128,6 +128,8 @@ div#random-btn-ctn{
     margin-top: 50px;
 }
 
+
+
 #random{
 height: 38px;
 border-radius: 20px;
@@ -139,8 +141,37 @@ font-weight: 400;
 width: 200px;
 
 }
+
+#next{
+    height: 38px;
+    border-radius: 20px;
+    background-color: rgb(3, 53, 71);
+    border: none;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 400;
+    width: 200px;
+
+    
+    }
+#next-ctn{
+    text-align: center;
+    margin-top: 50px;
+}
+
+
+
+
+
 #random-track{
     margin-top: 100px;
+
+ 
+}
+#random-track p.no-favorits{
+
+    text-align: center;
+ 
 }
 
 
@@ -157,13 +188,22 @@ div#fav, div#results{
     width: 94%;
     flex-wrap: wrap;
     margin: 0 auto;
+  
+}
+.no-favorits{
+    margin: 0 auto;
+    margin-top: 100px;
+}
+.no-result{
+    margin: 0 auto;
+    margin-top: 100px;
 }
 
 .track{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 26%;
+    width: 35%;
     margin: 0 auto;
     border-bottom: solid 1px rgb(224, 224, 224);
     padding: 10px;
@@ -236,18 +276,18 @@ div.player{
     border: solid 1px rgb(3, 53, 71);;
 }
 
-.btn-remove-fav{
+.btn-remove-fav, .btn-favorits{
 
     position: absolute;
     left: -26px;
     top: -72px;
-    z-index: 9;
+
 }
 .btn-add-fav{
     position: absolute;
     left: -26px;
     top: -72px;
-    z-index: 10;
+
 }
 .fav-cnt{
     position: relative;
@@ -257,11 +297,23 @@ div.player{
 
 /* track------------------------------------------------------------------------------ */
 
-/* a.added{
-    border-color: red;
-} */
+
 
 audio{
     margin-top: 10px;
 }
 
+.erreur{
+    color: red;
+    text-align: center;
+    margin: 0 auto;
+    margin-top: 100px;
+}
+
+@media (max-width: 1199.98px) { 
+    
+    div#fav, div#results{
+        flex-direction: column;
+    }
+
+ }
